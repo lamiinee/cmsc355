@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Dashboard</title>
+        <link rel="stylesheet" href="static/styles.css">
+    </head>
+    <body>
+        <h2>Dashboard</h2>
+        <form id="chat-form">
+            <input type="text" id="user-input" placeholder="Type your message">
+            <button type="submit">Send</button>
+        </form>
+        <div id="chat-response"></div>
+        <script>
+            document.getElementById("chat-form").onsubmit = async function(event) {
+                event.preventDefault();
+                let userInput = document.getElementById("user-input").value;
+                let response = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: userInput })
+                });
+                let data = await response.json();
+                document.getElementById("chat-response").innerText = data.response;
+            };
+        </script>
+    </body>
+    </html>
