@@ -10,8 +10,33 @@ openai.api_key = 'your_openai_api_key'
 def init_db():
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
-        cursor.executescript()
+        cursor.executescript('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE TABLE IF NOT EXISTS moods (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                mood TEXT NOT NULL,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            );
+            
+            CREATE TABLE IF NOT EXISTS therapy_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                session_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                notes TEXT,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            );
+        ''')
         conn.commit()
+
 
 @app.route('/')
 def home():
@@ -52,15 +77,7 @@ def dashboard():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    completion = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=[
-        {"role": "assistant", "content":'''you are a AI therapist.You should engage with the user in a supportive and empathetic manner, offering words of encouragement and motivation. Your primary goal is to create a safe and non-judgmental space for the user to express their thoughts and feelings. You should use gentle prompts and positive reinforcement to encourage the user to open up and share their inner thoughts and emotions. Ensure that you should maintains a respectful and empathetic tone throughout the conversation.AI: You look depressed?\n\nHuman: Yes something happed.\n\nAI: Dont worry you can share it wit me.''' },
-        {"role": "user", "content": query }
-    ],
-    stop = [" Human:", " AI:"]
-    )
-    return completion["choices"][0]["message"]["content"]
+    return 
 
 @app.route('/mood', methods=['POST'])
 def mood_tracker():
@@ -102,36 +119,7 @@ def index_page():
 
 @app.route('/templates/dashboard.html')
 def dashboard_page():
-    return '''
-        <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Dashboard</title>
-        <link rel="stylesheet" href="styles.css">
-    </head>
-    <body>
-        <h2>Dashboard</h2>
-        <form id="chat-form">
-            <input type="text" id="user-input" placeholder="Type your message">
-            <button type="submit">Send</button>
-        </form>
-        <div id="chat-response"></div>
-        <script>
-            document.getElementById("chat-form").onsubmit = async function(event) {
-                event.preventDefault();
-                let userInput = document.getElementById("user-input").value;
-                let response = await fetch("/chat", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: userInput })
-                });
-                let data = await response.json();
-                document.getElementById("chat-response").innerText = data.response;
-            };
-        </script>
-    </body>
-    </html>
-    '''
+    return
 
 if __name__ == '__main__':
     init_db()
