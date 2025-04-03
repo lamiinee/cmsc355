@@ -1,20 +1,23 @@
 <!DOCTYPE html>
-    <html>
-    <head>
-        <title>AI Therapist</title>
-        <link rel="stylesheet" href="static/styles.css">
-    </head>
-    <body>
+<html>
+<head>
+    <title>AI Therapist</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
         <h2>Welcome to AI Therapist Chatbot</h2>
-        <form action="/register" method="post">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Register</button>
-        </form>
-        <form action="/login" method="post">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-    </body>
-    </html>
+        
+        <!-- Register Button (Links to Register Form) -->
+        <a href="{{ url_for('register') }}" class="auth-button register-btn">
+            <i class="fas fa-user-plus"></i> Register
+        </a>
+        
+        <!-- Login Button (Links to Login Form) -->
+        <a href="{{ url_for('login') }}" class="auth-button login-btn">
+            <i class="fas fa-sign-in-alt"></i> Login
+        </a>
+    </div>
+</body>
+</html>

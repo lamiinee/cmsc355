@@ -11,6 +11,7 @@
             <button type="submit">Send</button>
         </form>
         <div id="chat-response"></div>
+
         <script>
             document.getElementById("chat-form").onsubmit = async function(event) {
                 event.preventDefault();
@@ -24,5 +25,11 @@
                 document.getElementById("chat-response").innerText = data.response;
             };
         </script>
+
+        <a href="/templates/moodtracker.html" class="button">Mood Tracker</a>
+
+        
+    
+        
     </body>
     </html>

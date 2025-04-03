@@ -37,16 +37,14 @@ def init_db():
         ''')
         conn.commit()
 
-
 @app.route('/')
 def home():
     return render_template('index.html')
 
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    #Ask for user information
-    username = request.form['username']
-    password = request.form['password']
+    if request.method == 'GET':
+        return render_template('register.html')  
     
     #Check the data base to see if the user already exists
     with sqlite3.connect('database.db') as conn:
@@ -59,9 +57,11 @@ def register():
             return 'Username already exists!'
 
 
-#login for existing users 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    
     username = request.form['username']
     password = request.form['password']
     with sqlite3.connect('database.db') as conn:
@@ -73,59 +73,15 @@ def login():
             return redirect(url_for('dashboard'))
         else:
             return 'Invalid username or password!'
-
-# Dashboard
+        
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('home'))
     return render_template('dashboard.html')
 
-@app.route('/chat', methods=['POST'])
-def chat():
-    return 
 
-@app.route('/moodtracker', methods=['POST'])
-def mood_tracker():
-    if 'user_id' not in session:
-        return redirect(url_for('home'))
-    mood = request.form['mood']
-    description = request.form['description']
-    with sqlite3.connect('database.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO moods (user_id, mood, description) VALUES (?, ?, ?)", (session['user_id'], mood, description))
-        conn.commit()
-    return redirect(url_for('dashboard'))
 
-# Frontend templates
-@app.route('/templates/index.html')
-def index_page():
-    return '''
-        <!DOCTYPE html>
-            <html>
-            <head>
-                <title>AI Therapist</title>
-                <link rel="stylesheet" href="styles.css">
-            </head>
-            <body>
-                <h2>Welcome to AI Therapist Chatbot</h2>
-                <form action="/register" method="post">
-                    <input type="text" name="username" placeholder="Username" required>
-                    <input type="password" name="password" placeholder="Password" required>
-                    <button type="submit">Register</button>
-                </form>
-                <form action="/login" method="post">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-            </body>
-            </html>
-    '''
-
-@app.route('/templates/dashboard.html')
-def dashboard_page():
-    return
 
 if __name__ == '__main__':
     init_db()
