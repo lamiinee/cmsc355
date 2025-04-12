@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Wellness Plan | AI Therapist{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="bi bi-journal-check"></i> Personalized Wellness Plan</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> This plan is generated based on your mood history to help support your mental wellness.
+                </div>
+                
+                <div class="p-3 bg-light rounded">
+                    {% if wellness_plan %}
+                        {{ wellness_plan|replace('\n', '<br>')|safe }}
+                    {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-emoji-frown display-4"></i>
+                            <p class="mt-3">Track your moods for a few days to generate a personalized wellness plan.</p>
+                            <a href="{{ url_for('moodtracker') }}" class="btn btn-primary mt-2">
+                                Go to Mood Tracker
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-3 text-end">
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Print Plan
+                    </button>
+                    <a href="{{ url_for('wellness') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-repeat"></i> Regenerate Plan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Resources | AI Therapist{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="bi bi-book"></i> Mental Health Resources</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> These resources can provide additional support when you need it.
+                </div>
+                
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                    {% for resource in resources %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ resource.title }}</h5>
+                                <p class="card-text">{{ resource.description }}</p>
+                                {% if resource.phone %}
+                                    <p class="card-text">
+                                        <i class="bi bi-telephone"></i> {{ resource.phone }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ resource.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-box-arrow-up-right"></i> Visit Website
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

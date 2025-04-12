@@ -1,77 +1,39 @@
-/* General Styling */
+:root {
+  --primary: #4a89dc;
+  --primary-dark: #3a70c2;
+  --secondary: #a0d468;
+  --danger: #ed5565;
+  --warning: #ffce54;
+  --info: #5d9cec;
+  --light: #f5f7fa;
+  --dark: #434a54;
+}
+
 body {
-  font-family: 'Arial', sans-serif;
-  background-color: #f5f5f5;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
-.container {
-  text-align: center;
-  background: white;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-h2 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
   color: #333;
-  margin-bottom: 1.5rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Button Styling */
-.auth-button {
-  display: inline-block;
-  padding: 12px 24px;
-  margin: 10px;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background-color 0.3s, transform 0.2s;
-}
-
-.auth-button:hover {
-  transform: translateY(-2px);
-}
-
-.register-btn {
-  background-color: #4CAF50; /* Green */
-  color: white;
-}
-
-.login-btn {
-  background-color: #2196F3; /* Blue */
-  color: white;
-}
-
-/* Icons */
-.auth-button i {
-  margin-right: 8px;
-}
-
-/* Auth System Styling */
+/* Auth styles */
 .auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: calc(100vh - 120px);
   padding: 20px;
 }
 
 .auth-card {
   background: white;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 30px;
   width: 100%;
   max-width: 450px;
-  padding: 40px;
 }
 
 .auth-header {
@@ -80,107 +42,126 @@ h2 {
 }
 
 .auth-header i {
-  color: #4a89dc;
-  margin-bottom: 15px;
+  color: var(--primary);
 }
 
-.auth-header h1 {
-  color: #333;
-  font-size: 28px;
-  margin: 10px 0;
-}
-
-.auth-header p {
-  color: #666;
-  font-size: 16px;
-}
-
-.auth-form .form-group {
-  margin-bottom: 20px;
-}
-
-.auth-form label {
-  display: block;
-  margin-bottom: 8px;
-  color: #555;
-  font-weight: 500;
-}
-
-.auth-form input {
-  width: 100%;
+.auth-form .form-control {
   padding: 12px 15px;
+  margin-bottom: 15px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  font-size: 16px;
-  transition: border 0.3s;
+  transition: all 0.3s;
 }
 
-.auth-form input:focus {
-  border-color: #4a89dc;
-  outline: none;
+.auth-form .form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(74, 137, 220, 0.2);
 }
 
-.form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 20px 0;
+/* Chat styles */
+#chat-container {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  min-height: 400px;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
-.remember-me {
-  display: flex;
-  align-items: center;
-  color: #666;
+.typing-indicator {
+  width: 60px;
+  padding: 10px !important;
 }
 
-.forgot-password {
-  color: #4a89dc;
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.btn {
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #6c757d;
+  border-radius: 50%;
   display: inline-block;
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.3s;
+  margin: 0 2px;
+  animation: typingAnimation 1.4s infinite ease-in-out;
 }
 
-.btn-primary {
-  background: #4a89dc;
-  color: white;
+.typing-dot:nth-child(1) {
+  animation-delay: 0s;
 }
 
-.btn-primary:hover {
-  background: #3a70c2;
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
 }
 
-.auth-footer {
-  text-align: center;
-  margin-top: 20px;
-  color: #666;
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
 }
 
-.auth-footer a {
-  color: #4a89dc;
-  text-decoration: none;
-  font-weight: 500;
+@keyframes typingAnimation {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-5px); }
 }
 
-.alert {
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-size: 14px;
+/* Mood tracker styles */
+.mood-emoji {
+  font-size: 1.5rem;
+  margin-right: 10px;
 }
 
-.alert-danger {
-  background: #ffebee;
-  color: #c62828;
-  border: 1px solid #ef9a9a;
+/* Progress bar colors */
+.progress-bar.bg-success {
+  background-color: #48cfad !important;
+}
+
+.progress-bar.bg-warning {
+  background-color: #ffce54 !important;
+}
+
+.progress-bar.bg-danger {
+  background-color: #ed5565 !important;
+}
+
+/* Card hover effects */
+.card {
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .auth-container {
+      padding: 10px;
+  }
+  
+  .auth-card {
+      padding: 20px;
+  }
+  
+  #chat-container {
+      min-height: 300px;
+  }
+}
+
+/* Print styles for wellness plan */
+@media print {
+  body * {
+      visibility: hidden;
+  }
+  .card, .card * {
+      visibility: visible;
+  }
+  .card {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      box-shadow: none !important;
+      border: none !important;
+  }
+  .no-print {
+      display: none !important
+  }
 }
