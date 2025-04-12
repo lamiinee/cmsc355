@@ -4,6 +4,9 @@ from openai import OpenAI
 from datetime import datetime
 import os
 import random 
+import requests
+import json
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
@@ -114,20 +117,49 @@ def init_db():
 OpenAI.api_key = 'your-openai-api-key'
 
 def get_ai_response(prompt):
-    client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key="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>",
-    )
-    completion = client.chat.completions.create(
-    model="openai/gpt-4o",
-    messages=[
-        {
-        "role": "user",
-        "content": "What is the meaning of life?"
-        }
-    ]
-    )
-    print(completion.choices[0].message.content)
+    # Set your API endpoint
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    # Be sure to secure your API key properly; do not hard-code it in production.
+    headers = {
+        "Authorization": "Bearer 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",
+        "Content-Type": "application/json"
+    }
+
+    # Prepare a conversation including a system message to define the AI's role
+    payload = {
+        "model": "nvidia/llama-3.1-nemotron-nano-8b-v1:free",
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "You are a compassionate and empathetic AI therapist. "
+                    "Your goal is to provide supportive, thoughtful responses and help users feel heard. "
+                    "Please be mindful that you are not a substitute for professional mental health advice."
+                )
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    }
+
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    
+    if response.status_code != 200:
+        raise Exception(f"Request failed with status {response.status_code}: {response.text}")
+    
+    # Parse the returned JSON response
+    response_json = response.json()
+    
+    # Extract the AI response text from the first choice in the response.
+    # Adjust the extraction if your API response structure differs.
+    try:
+        ai_message = response_json["choices"][0]["message"]["content"]
+    except (KeyError, IndexError):
+        raise Exception("Unexpected response structure: " + json.dumps(response_json, indent=2))
+    
+    return ai_message
 
 
 @app.route('/')
