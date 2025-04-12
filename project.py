@@ -4,8 +4,6 @@ from openai import OpenAI
 from datetime import datetime
 import os
 import random 
-import requests
-import json
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
@@ -112,8 +110,25 @@ def init_db():
         ''')
         conn.commit()
 
+# Initialize OpenAI (replace with your API key)
+OpenAI.api_key = 'your-openai-api-key'
 
-# Initialize the OpenAI client with OpenRouter configuration
+def get_ai_response(prompt):
+    client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key="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>",
+    )
+    completion = client.chat.completions.create(
+    model="openai/gpt-4o",
+    messages=[
+        {
+        "role": "user",
+        "content": "What is the meaning of life?"
+        }
+    ]
+    )
+    print(completion.choices[0].message.content)
+
 
 @app.route('/')
 def home():
@@ -177,21 +192,24 @@ def dashboard():
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
-    response = requests.post(
-    url="https://openrouter.ai/api/v1/chat/completions",
-    headers={
-        "Authorization": "Bearer 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",
-    },
-    data=json.dumps({
-        "model": "openai/gpt-4o", # Optional
-        "messages": [
-        {
-            "role": "user",
-            "content": "What is the meaning of life?"
-        }
-        ]
-    })
-    )
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        user_message = request.json.get('message')
+        ai_response = get_ai_response(user_message)
+        
+        # Save conversation to database
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO chat_history (user_id, user_message, ai_response) VALUES (?, ?, ?)",
+                (session['user_id'], user_message, ai_response)
+            )
+            conn.commit()
+        
+        return jsonify({'response': ai_response})
+    
     return render_template('chat.html')
 
 
