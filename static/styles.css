@@ -109,7 +109,7 @@ body {
 
 /* Progress bar colors */
 .progress-bar.bg-success {
-  background-color: #48cfad !important;
+  background-color: #d94646 !important;
 }
 
 .progress-bar.bg-warning {
@@ -117,7 +117,7 @@ body {
 }
 
 .progress-bar.bg-danger {
-  background-color: #ed5565 !important;
+  background-color: #55ed6c !important;
 }
 
 /* Card hover effects */

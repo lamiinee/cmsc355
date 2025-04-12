@@ -65,35 +65,50 @@
                                     <th>Notes</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {% for mood in mood_history %}
-                                    <tr>
-                                        <td>{{ mood[3] }}</td>
-                                        <td>
-                                            {% if mood[0] == 'Happy' %}😊
-                                            {% elif mood[0] == 'Sad' %}😢
-                                            {% elif mood[0] == 'Angry' %}😠
-                                            {% elif mood[0] == 'Anxious' %}😰
-                                            {% elif mood[0] == 'Stressed' %}😫
-                                            {% elif mood[0] == 'Calm' %}😌
-                                            {% elif mood[0] == 'Excited' %}🤩
-                                            {% elif mood[0] == 'Tired' %}😴
-                                            {% else %}😐{% endif %}
-                                            {{ mood[0] }}
-                                        </td>
-                                        <td>
-                                            <div class="progress">
-                                                <div class="progress-bar.bg-success" 
-                                                     role="progressbar" style="width:  mood2*10" 
-                                                     aria-valuenow="{{ mood[2] }}" aria-valuemin="1" aria-valuemax="10">
-                                                    {{ mood[2] }}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>{{ mood[1] or '-' }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
+                            <!-- In your table body -->
+<tbody>
+    {% for entry in mood_history %}
+    <tr>
+        <td>{{ entry.timestamp }}</td>
+        <td>
+            {% if entry.mood == 'Happy' %}😊
+            {% elif entry.mood == 'Sad' %}😢
+            {% elif entry.mood == 'Angry' %}😠
+            {% elif entry.mood == 'Anxious' %}😰
+            {% elif entry.mood == 'Stressed' %}😫
+            {% elif entry.mood == 'Calm' %}😌
+            {% elif entry.mood == 'Excited' %}🤩
+            {% elif entry.mood == 'Tired' %}😴
+            {% else %}😐{% endif %}
+            {{ entry.mood }}
+        </td>
+        <td>
+            <div class="progress">
+                <div class="progress-bar 
+                    {% if entry.intensity <= 3 %}bg-success
+                    {% elif entry.intensity <= 7 %}bg-warning
+                    {% else %}bg-danger
+                    {% endif %}" 
+                    role="progressbar" 
+                    style="width: {{ entry.intensity * 10 }}%" 
+                    aria-valuenow="{{ entry.intensity }}" 
+                    aria-valuemin="1" 
+                    aria-valuemax="10">
+                    {{ entry.intensity }}
+                </div>
+            </div>
+        </td>
+        <td>{{ entry.description or '-' }}</td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="4" class="text-center py-4 text-muted">
+            <i class="bi bi-emoji-frown display-4"></i>
+            <p class="mt-3">No mood entries yet. Record your first mood above!</p>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
                         </table>
                     </div>
                 {% else %}

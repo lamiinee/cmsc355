@@ -14,7 +14,7 @@
                     <i class="bi bi-info-circle"></i> This plan is generated based on your mood history to help support your mental wellness.
                 </div>
                 
-                <div class="p-3 bg-light rounded">
+                <div class="p-3 bg-light rounded wellness-plan">
                     {% if wellness_plan %}
                         {{ wellness_plan|replace('\n', '<br>')|safe }}
                     {% else %}
@@ -28,16 +28,56 @@
                     {% endif %}
                 </div>
                 
-                <div class="mt-3 text-end">
+                <div class="mt-3 d-flex justify-content-between">
                     <button class="btn btn-outline-primary" onclick="window.print()">
                         <i class="bi bi-printer"></i> Print Plan
                     </button>
-                    <a href="{{ url_for('wellness') }}" class="btn btn-primary">
-                        <i class="bi bi-arrow-repeat"></i> Regenerate Plan
-                    </a>
+                    <div>
+                        <a href="{{ url_for('moodtracker') }}" class="btn btn-outline-secondary me-2">
+                            <i class="bi bi-emoji-smile"></i> Track Mood
+                        </a>
+                        <a href="{{ url_for('wellness') }}" class="btn btn-primary">
+                            <i class="bi bi-arrow-repeat"></i> Regenerate Plan
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .wellness-plan {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.8;
+    }
+    
+    .wellness-plan br {
+        margin-bottom: 1rem;
+        display: block;
+        content: "";
+    }
+    
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .card, .card * {
+            visibility: visible;
+        }
+        .card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .no-print, .card-header .bi, .alert {
+            display: none !important;
+        }
+    }
+</style>
 {% endblock %}
