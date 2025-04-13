@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash
 import sqlite3
-from openai import OpenAI
 from datetime import datetime
 import os
 import random 
@@ -15,7 +14,7 @@ app.secret_key = os.urandom(24)
 class MoodTracker:
     def __init__(self):
         self.wellness_activities = {
-            'Happy': ["Go for a walk in nature", "Share your joy with someone", "Start a gratitude journal"],
+            'Happy': ["Go for a walk in nature", "Share your joy with someone", "Start a gratitude journal", "Keep it up!"],
             'Sad': ["Practice self-compassion", "Listen to uplifting music", "Reach out to a friend"],
             'Angry': ["Try deep breathing exercises", "Go for a run", "Write down your feelings"],
             'Anxious': ["Practice 4-7-8 breathing", "Do a grounding exercise", "Try progressive muscle relaxation"],
@@ -320,6 +319,11 @@ def resources():
             'title': '7 Cups',
             'description': 'Free online therapy and counseling with trained listeners',
             'url': 'https://www.7cups.com'
+        },
+        {
+            'title': 'VCU stduent health',
+            'description': 'VCU student mental health resources',
+            'url': 'https://health.students.vcu.edu/patient-resources/mental-health/'
         }
     ]
     
