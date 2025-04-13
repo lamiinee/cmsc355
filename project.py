@@ -157,7 +157,7 @@ def get_ai_response(prompt):
     url = "https://openrouter.ai/api/v1/chat/completions"
     # Be sure to secure your API key properly; do not hard-code it in production.
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": "Bearer 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",
         "Content-Type": "application/json"
     }
 
