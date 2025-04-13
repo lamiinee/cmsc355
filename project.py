@@ -151,33 +151,58 @@ def get_db_connection():
     return conn
 
 
-def get_ai_response(prompt):
-    # Set your API endpoint
+def get_chat_history(user_id, limit=10):
+    """Retrieve the most recent chat messages for the user."""
+    with sqlite3.connect('database.db') as conn:
+        conn.row_factory = sqlite3.Row
+        history = conn.execute(
+            'SELECT user_message, ai_response FROM chat_history WHERE user_id = ? ORDER BY created_at ASC LIMIT ?',
+            (user_id, limit)
+        ).fetchall()
+    # Convert the history into a list of message dicts
+    messages = []
+    for entry in history:
+        messages.append({"role": "user", "content": entry["user_message"]})
+        messages.append({"role": "assistant", "content": entry["ai_response"]})
+    return messages
+
+
+
+def get_ai_response(prompt, conversation_context=None):
+    """
+    Get the AI's response.
+    :param prompt: The new user prompt.
+    :param conversation_context: A list of message dictionaries representing past conversation history.
+    """
     url = "https://openrouter.ai/api/v1/chat/completions"
-    # Be sure to secure your API key properly; do not hard-code it in production.
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": "Bearer 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",
         "Content-Type": "application/json"
     }
 
-    # Prepare a conversation including a system message to define the AI's role
+    # Start with a system message to set the role
+    messages = [{
+        "role": "system",
+        "content": (
+            "You are a compassionate and empathetic AI therapist. "
+            "Your goal is to provide supportive, thoughtful responses and help users feel heard. "
+            "Please be mindful that you are not a substitute for professional mental health advice."
+        )
+    }]
+    
+    # Include previous conversation history if provided.
+    if conversation_context:
+        messages.extend(conversation_context)
+    
+    # Append the new user prompt.
+    messages.append({
+        "role": "user",
+        "content": prompt
+    })
+
     payload = {
-        "model": "meta-llama/llama-4-scout:free",
-        "messages": [
-            {
-                "role": "system",
-                "content": (
-                    "You are a compassionate and empathetic AI therapist. "
-                    "Your goal is to provide supportive, thoughtful responses and help users feel heard. "
-                    "Please be mindful that you are not a substitute for professional mental health advice."
-                    "Try to keep messages realively short and sweet."
-                )
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+        "model": "google/gemini-2.5-pro-exp-03-25:free",  # Example model; adjust as necessary.
+        "messages": messages
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(payload))
@@ -185,17 +210,15 @@ def get_ai_response(prompt):
     if response.status_code != 200:
         raise Exception(f"Request failed with status {response.status_code}: {response.text}")
     
-    # Parse the returned JSON response
     response_json = response.json()
     
-    # Extract the AI response text from the first choice in the response.
-    # Adjust the extraction if your API response structure differs.
     try:
         ai_message = response_json["choices"][0]["message"]["content"]
     except (KeyError, IndexError):
         raise Exception("Unexpected response structure: " + json.dumps(response_json, indent=2))
     
     return ai_message
+
 
 
 @app.route('/chat', methods=['GET', 'POST'])
@@ -205,9 +228,14 @@ def chat():
     
     if request.method == 'POST':
         user_message = request.json.get('message')
-        ai_response = get_ai_response(user_message)
         
-        # Save conversation to database
+        # Retrieve previous conversation context (limit to the last 4 interactions for example)
+        conversation_context = get_chat_history(session['user_id'], limit=4)
+        
+        # Get AI response using both previous context and the new message.
+        ai_response = get_ai_response(user_message, conversation_context)
+        
+        # Save conversation to the database
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -219,6 +247,7 @@ def chat():
         return jsonify({'response': ai_response})
     
     return render_template('chat.html')
+
 
 
 @app.route('/')
