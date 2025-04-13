@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash
 import sqlite3
 from openai import OpenAI
 from datetime import datetime
@@ -7,14 +7,13 @@ import random
 import requests
 import json
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 app.secret_key = os.urandom(24)
 
+# Removed Dictionary, fixed database
+# all mood data is stored in the database.
 class MoodTracker:
     def __init__(self):
-        # Dictionary to store mood entries {user_id: [mood_entries]}
-        self.mood_history = {}
-        # Sample wellness activities
         self.wellness_activities = {
             'Happy': ["Go for a walk in nature", "Share your joy with someone", "Start a gratitude journal"],
             'Sad': ["Practice self-compassion", "Listen to uplifting music", "Reach out to a friend"],
@@ -26,42 +25,75 @@ class MoodTracker:
             'Tired': ["Take a power nap", "Drink some water", "Do some gentle movement"],
             'Neutral': ["Try something new", "Check in with yourself", "Plan your next wellness activity"]
         }
-    
+
     def add_mood_entry(self, user_id, mood, intensity, description=""):
-        """Add a new mood entry for a user"""
-        if user_id not in self.mood_history:
-            self.mood_history[user_id] = []
-            
-        entry = {
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with sqlite3.connect('database.db') as conn:
+            conn.execute(
+                '''INSERT INTO moods (user_id, mood, description, intensity, created_at)
+                   VALUES (?, ?, ?, ?, ?)''',
+                (user_id, mood, description, intensity, timestamp)
+            )
+            conn.commit()
+        return {
+            'user_id': user_id,
             'mood': mood,
-            'intensity': intensity,
             'description': description,
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            'intensity': intensity,
+            'timestamp': timestamp
         }
-        self.mood_history[user_id].append(entry)
-        return entry
-    
+
     def get_mood_history(self, user_id):
-        """Get all mood entries for a user"""
-        return self.mood_history.get(user_id, [])
-    
+        with sqlite3.connect('database.db') as conn:
+            conn.row_factory = sqlite3.Row
+            history = conn.execute(
+                'SELECT mood, intensity, description, created_at FROM moods WHERE user_id = ? ORDER BY created_at ASC',
+                (user_id,)
+            ).fetchall()
+        return [dict(entry) for entry in history]
+
     def generate_wellness_plan(self, user_id):
-        """Generate a personalized wellness plan based on mood history"""
+        """Generate a personalized 7-Day Wellness Plan using diverse focuses per day."""
         history = self.get_mood_history(user_id)
         if not history:
             return "Track your moods for a few days to generate a personalized wellness plan."
         
-        # Analyze recent moods
-        recent_moods = [entry['mood'] for entry in history[-7:]]  # Last 7 entries
-        mood_counts = {mood: recent_moods.count(mood) for mood in recent_moods}
+        # Analyze recent moods (last 7 entries)
+        recent_moods = [entry['mood'] for entry in history[-7:]]
+        # count each mood in the last 7 entries
+        mood_counts = {mood: recent_moods.count(mood) for mood in set(recent_moods)}
         
-        # Generate plan based on most common moods
         plan = "Your Personalized 7-Day Wellness Plan:\n\n"
+        plan_foci = []  # to keep track of each day's focus
+        
+        #lists for weighted random selection
+        available_moods = list(mood_counts.keys())
+        weights = [mood_counts[m] for m in available_moods]
+        
         for day in range(1, 8):
-            # Select a mood to focus on (either most common or random from recent)
-            focus_mood = max(mood_counts, key=mood_counts.get) if mood_counts else random.choice(list(self.wellness_activities.keys()))
+            if available_moods:
+                # For day 1, choose using weighted random selection
+                if day == 1:
+                    focus_mood = random.choices(available_moods, weights=weights, k=1)[0]
+                else:
+                    #filter out the previous focus from choice candidates.
+                    candidates = []
+                    candidate_weights = []
+                    for mood, weight in zip(available_moods, weights):
+                        if mood != plan_foci[-1]:
+                            candidates.append(mood)
+                            candidate_weights.append(weight)
+                    if candidates:
+                        focus_mood = random.choices(candidates, weights=candidate_weights, k=1)[0]
+                    else:
+                        #if (only one mood available), choose that mood.
+                        focus_mood = plan_foci[-1]
+            else:
+                #if mood_counts is empty, choose any random mood from wellness activities.
+                focus_mood = random.choice(list(self.wellness_activities.keys()))
             
-            # Get 3 random activities for this mood
+            plan_foci.append(focus_mood)
+            # 3 random wellness activities for the focus mood.
             activities = random.sample(self.wellness_activities[focus_mood], 3)
             
             plan += f"Day {day} - Focus: {focus_mood}\n"
@@ -113,21 +145,25 @@ def init_db():
         ''')
         conn.commit()
 
-# Initialize OpenAI (replace with your API key)
-OpenAI.api_key = 'your-openai-api-key'
+# Helper function to get a database connection
+def get_db_connection():
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row  # So we can access columns by name in the templates
+    return conn
+
 
 def get_ai_response(prompt):
     # Set your API endpoint
     url = "https://openrouter.ai/api/v1/chat/completions"
     # Be sure to secure your API key properly; do not hard-code it in production.
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": "Bearer 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",
         "Content-Type": "application/json"
     }
 
     # Prepare a conversation including a system message to define the AI's role
     payload = {
-        "model": "nvidia/llama-3.1-nemotron-nano-8b-v1:free",
+        "model": "meta-llama/llama-4-scout:free",
         "messages": [
             {
                 "role": "system",
@@ -135,6 +171,7 @@ def get_ai_response(prompt):
                     "You are a compassionate and empathetic AI therapist. "
                     "Your goal is to provide supportive, thoughtful responses and help users feel heard. "
                     "Please be mindful that you are not a substitute for professional mental health advice."
+                    "Try to keep messages realively short and sweet."
                 )
             },
             {
@@ -162,11 +199,35 @@ def get_ai_response(prompt):
     return ai_message
 
 
+@app.route('/chat', methods=['GET', 'POST'])
+def chat():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        user_message = request.json.get('message')
+        ai_response = get_ai_response(user_message)
+        
+        # Save conversation to database
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO chat_history (user_id, user_message, ai_response) VALUES (?, ?, ?)",
+                (session['user_id'], user_message, ai_response)
+            )
+            conn.commit()
+        
+        return jsonify({'response': ai_response})
+    
+    return render_template('chat.html')
+
+
 @app.route('/')
 def home():
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
     return render_template('index.html')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -187,6 +248,7 @@ def register():
                 return render_template('register.html', error="Username already exists")
     
     return render_template('register.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -210,10 +272,12 @@ def login():
     
     return render_template('login.html')
 
+
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('home'))
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -221,29 +285,6 @@ def dashboard():
         return redirect(url_for('login'))
     
     return render_template('dashboard.html')
-
-@app.route('/chat', methods=['GET', 'POST'])
-def chat():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if request.method == 'POST':
-        user_message = request.json.get('message')
-        ai_response = get_ai_response(user_message)
-        
-        # Save conversation to database
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO chat_history (user_id, user_message, ai_response) VALUES (?, ?, ?)",
-                (session['user_id'], user_message, ai_response)
-            )
-            conn.commit()
-        
-        return jsonify({'response': ai_response})
-    
-    return render_template('chat.html')
-
 
 
 @app.route('/resources')
@@ -292,27 +333,45 @@ def moodtracker():
     
     if request.method == 'POST':
         mood = request.form['mood']
-        intensity = int(request.form.get('intensity', 5))
+        intensity = request.form['intensity']
         description = request.form.get('description', '')
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Add to mood tracker
-        mood_tracker.add_mood_entry(session['user_id'], mood, intensity, description)
+        # Insert the mood into the moods table in your database.
+        conn = get_db_connection()
+        conn.execute(
+            '''INSERT INTO moods (user_id, mood, description, intensity, created_at)
+               VALUES (?, ?, ?, ?, ?)''',
+            (session['user_id'], mood, description, intensity, timestamp)
+        )
+        conn.commit()
+        conn.close()
+
+        flash('Mood recorded successfully!', 'success')
         return redirect(url_for('moodtracker'))
+
+    # For GET method, fetch the user's mood history (you can paginate if needed)
+    conn = get_db_connection()
+    mood_history = conn.execute(
+        'SELECT * FROM moods WHERE user_id = ? ORDER BY created_at DESC',
+        (session['user_id'],)
+    ).fetchall()
+    conn.close()
     
-    # Get mood history
-    mood_history = mood_tracker.get_mood_history(session['user_id'])
+    # Pass the mood_history data to your Jinja2 template.
     return render_template('moodtracker.html', mood_history=mood_history)
+
 
 @app.route('/wellness')
 def wellness():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
+    # wellness plan using the database
     wellness_plan = mood_tracker.generate_wellness_plan(session['user_id'])
     return render_template('wellness.html', wellness_plan=wellness_plan)
+
 
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
-
-    # raym5@vcu.edu 
