@@ -157,7 +157,7 @@ def get_ai_response(prompt):
     url = "https://openrouter.ai/api/v1/chat/completions"
     # Be sure to secure your API key properly; do not hard-code it in production.
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": "Bearer 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",
         "Content-Type": "application/json"
     }
 
@@ -350,7 +350,7 @@ def moodtracker():
         flash('Mood recorded successfully!', 'success')
         return redirect(url_for('moodtracker'))
 
-    # For GET method, fetch the user's mood history (you can paginate if needed)
+    # For GET method, fetch the user's mood history
     conn = get_db_connection()
     mood_history = conn.execute(
         'SELECT * FROM moods WHERE user_id = ? ORDER BY created_at DESC',
