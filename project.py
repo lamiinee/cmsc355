@@ -176,7 +176,7 @@ def get_ai_response(prompt, conversation_context=None):
     """
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": "Bearer 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",
         "Content-Type": "application/json"
     }
 
@@ -199,7 +199,7 @@ def get_ai_response(prompt, conversation_context=None):
         "role": "user",
         "content": prompt
     })
-
+    # google gemini trained using TensorFlow
     payload = {
         "model": "google/gemini-2.5-pro-exp-03-25:free",  # Example model; adjust as necessary.
         "messages": messages
@@ -350,9 +350,15 @@ def resources():
             'url': 'https://www.7cups.com'
         },
         {
-            'title': 'VCU stduent health',
+            'title': 'VCU Student Health',
             'description': 'VCU student mental health resources',
             'url': 'https://health.students.vcu.edu/patient-resources/mental-health/'
+        },
+        {
+            'title': 'University Counseling Services (UCS)',
+            'description': 'Free individual, group, and couple\'s therapy services to VCU students.',
+            'phone': '1-804-828-6200',
+            'url': 'https://counseling.vcu.edu/'
         }
     ]
     
