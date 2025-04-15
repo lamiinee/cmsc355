@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash
 import sqlite3
-from openai import OpenAI
 from datetime import datetime
 import os
 import random 
@@ -15,7 +14,7 @@ app.secret_key = os.urandom(24)
 class MoodTracker:
     def __init__(self):
         self.wellness_activities = {
-            'Happy': ["Go for a walk in nature", "Share your joy with someone", "Start a gratitude journal"],
+            'Happy': ["Go for a walk in nature", "Share your joy with someone", "Start a gratitude journal", "Keep it up!"],
             'Sad': ["Practice self-compassion", "Listen to uplifting music", "Reach out to a friend"],
             'Angry': ["Try deep breathing exercises", "Go for a run", "Write down your feelings"],
             'Anxious': ["Practice 4-7-8 breathing", "Do a grounding exercise", "Try progressive muscle relaxation"],
@@ -152,33 +151,58 @@ def get_db_connection():
     return conn
 
 
-def get_ai_response(prompt):
-    # Set your API endpoint
+def get_chat_history(user_id, limit=10):
+    """Retrieve the most recent chat messages for the user."""
+    with sqlite3.connect('database.db') as conn:
+        conn.row_factory = sqlite3.Row
+        history = conn.execute(
+            'SELECT user_message, ai_response FROM chat_history WHERE user_id = ? ORDER BY created_at ASC LIMIT ?',
+            (user_id, limit)
+        ).fetchall()
+    # Convert the history into a list of message dicts
+    messages = []
+    for entry in history:
+        messages.append({"role": "user", "content": entry["user_message"]})
+        messages.append({"role": "assistant", "content": entry["ai_response"]})
+    return messages
+
+
+
+def get_ai_response(prompt, conversation_context=None):
+    """
+    Get the AI's response.
+    :param prompt: The new user prompt.
+    :param conversation_context: A list of message dictionaries representing past conversation history.
+    """
     url = "https://openrouter.ai/api/v1/chat/completions"
-    # Be sure to secure your API key properly; do not hard-code it in production.
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": "Bearer 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",
         "Content-Type": "application/json"
     }
 
-    # Prepare a conversation including a system message to define the AI's role
+    # Start with a system message to set the role
+    messages = [{
+        "role": "system",
+        "content": (
+            "You are a compassionate and empathetic AI therapist. "
+            "Your goal is to provide supportive, thoughtful responses and help users feel heard. "
+            "Please be mindful that you are not a substitute for professional mental health advice."
+        )
+    }]
+    
+    # Include previous conversation history if provided.
+    if conversation_context:
+        messages.extend(conversation_context)
+    
+    # Append the new user prompt.
+    messages.append({
+        "role": "user",
+        "content": prompt
+    })
+    # google gemini trained using TensorFlow
     payload = {
-        "model": "meta-llama/llama-4-scout:free",
-        "messages": [
-            {
-                "role": "system",
-                "content": (
-                    "You are a compassionate and empathetic AI therapist. "
-                    "Your goal is to provide supportive, thoughtful responses and help users feel heard. "
-                    "Please be mindful that you are not a substitute for professional mental health advice."
-                    "Try to keep messages realively short and sweet."
-                )
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+        "model": "google/gemini-2.5-pro-exp-03-25:free",  # Example model; adjust as necessary.
+        "messages": messages
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(payload))
@@ -186,17 +210,15 @@ def get_ai_response(prompt):
     if response.status_code != 200:
         raise Exception(f"Request failed with status {response.status_code}: {response.text}")
     
-    # Parse the returned JSON response
     response_json = response.json()
     
-    # Extract the AI response text from the first choice in the response.
-    # Adjust the extraction if your API response structure differs.
     try:
         ai_message = response_json["choices"][0]["message"]["content"]
     except (KeyError, IndexError):
         raise Exception("Unexpected response structure: " + json.dumps(response_json, indent=2))
     
     return ai_message
+
 
 
 @app.route('/chat', methods=['GET', 'POST'])
@@ -206,9 +228,14 @@ def chat():
     
     if request.method == 'POST':
         user_message = request.json.get('message')
-        ai_response = get_ai_response(user_message)
         
-        # Save conversation to database
+        # Retrieve previous conversation context (limit to the last 4 interactions for example)
+        conversation_context = get_chat_history(session['user_id'], limit=4)
+        
+        # Get AI response using both previous context and the new message.
+        ai_response = get_ai_response(user_message, conversation_context)
+        
+        # Save conversation to the database
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -220,6 +247,7 @@ def chat():
         return jsonify({'response': ai_response})
     
     return render_template('chat.html')
+
 
 
 @app.route('/')
@@ -320,6 +348,17 @@ def resources():
             'title': '7 Cups',
             'description': 'Free online therapy and counseling with trained listeners',
             'url': 'https://www.7cups.com'
+        },
+        {
+            'title': 'VCU Student Health',
+            'description': 'VCU student mental health resources',
+            'url': 'https://health.students.vcu.edu/patient-resources/mental-health/'
+        },
+        {
+            'title': 'University Counseling Services (UCS)',
+            'description': 'Free individual, group, and couple\'s therapy services to VCU students.',
+            'phone': '1-804-828-6200',
+            'url': 'https://counseling.vcu.edu/'
         }
     ]
     
@@ -350,7 +389,7 @@ def moodtracker():
         flash('Mood recorded successfully!', 'success')
         return redirect(url_for('moodtracker'))
 
-    # For GET method, fetch the user's mood history (you can paginate if needed)
+    # For GET method, fetch the user's mood history
     conn = get_db_connection()
     mood_history = conn.execute(
         'SELECT * FROM moods WHERE user_id = ? ORDER BY created_at DESC',

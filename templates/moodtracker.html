@@ -69,7 +69,7 @@
 <tbody>
     {% for entry in mood_history %}
     <tr>
-        <td>{{ entry.timestamp }}</td>
+        <td>{{ entry.created_at }}</td>
         <td>
             {% if entry.mood == 'Happy' %}😊
             {% elif entry.mood == 'Sad' %}😢
