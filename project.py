@@ -160,6 +160,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
+                isAdmin INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             
@@ -315,6 +316,32 @@ def home():
         return redirect(url_for('dashboard'))
     return render_template('index.html')
 
+def __get_all_users():
+    """
+    Retrieves all users from the database.
+
+    Returns:
+        list: A list of dictionaries, each representing a user row from the 'users' table.
+    """
+    with sqlite3.connect('database.db') as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute('SELECT * FROM users').fetchall()
+    return [dict(row) for row in rows]
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    if 'user_id' not in session:
+        return redirect(url_for('home'))
+    if 'user_id' in session:
+        user_data = __get_all_from_db("users", "id");
+        isAdmin = user_data[0]['isAdmin']
+        if isAdmin == 0:
+            return redirect(url_for('home'))
+
+    all_users = __get_all_users()    
+
+    return render_template('admin.html', all_users=all_users)
+ 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """
@@ -358,11 +385,14 @@ def login():
         
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id FROM users WHERE username = ? AND password = ?", (username, password))
+            cursor.execute("SELECT id, isAdmin FROM users WHERE username = ? AND password = ?", (username, password))
             user = cursor.fetchone()
-
+            
+            if user is None:
+                return render_template('login.html', error="Invalid username or password")
+            user_id = user[0]
             if user:
-                session['user_id'] = user[0]
+                session['user_id'] = user_id
                 return redirect(url_for('dashboard'))
             else:
                 return render_template('login.html', error="Invalid username or password")
@@ -437,14 +467,14 @@ def remove_user_data():
     __delete_all_data()
     return redirect(url_for('account'))
 
-def __delete_account():
+def __delete_account(id: int):
     """
     Deletes the current user's account from the 'users' table.
     """
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
         query = "DELETE FROM users WHERE id = ?"
-        cursor.execute(query, (session['user_id'],))
+        cursor.execute(query, (id,))
         conn.commit()
 
 @app.route('/remove_user_account', methods=['POST'])
@@ -457,11 +487,21 @@ def remove_user_account():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    __delete_account()
+    target_id = request.form.get('target_user_id')
+    if not target_id:
+        flash("No user specified.", "danger")
+        return redirect(url_for('dashboard'))
+    
+    
+    user_data = __get_all_from_db("users", "id");
+    isAdmin = user_data[0]['isAdmin']
+    __delete_account(target_id)
+    if isAdmin:
+        return redirect(url_for('admin'))
     session.pop('user_id', None)
     return redirect(url_for('home'))
 
-def __get_all_from_db(table: str, user_col: str = 'user_id'):
+def __get_all_from_db(table: str, user_col: str = 'user_id', data_col: str = '*'):
     """
     Retrieves all rows from the specified table for the current user.
 
@@ -473,7 +513,7 @@ def __get_all_from_db(table: str, user_col: str = 'user_id'):
         list: A list of rows (each as a dictionary) ordered by created_at in descending order.
     """
     conn = __get_db_connection()
-    query = f"SELECT * FROM {table} WHERE {user_col} = ? ORDER BY created_at DESC"
+    query = f"SELECT {data_col} FROM {table} WHERE {user_col} = ? ORDER BY created_at DESC"
     ret = conn.execute(query, (session['user_id'],)).fetchall()
     conn.close()
     return ret
@@ -486,6 +526,10 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
+    isAdmin = __get_all_from_db("users","id", "isAdmin")[0]['isAdmin']
+    if isAdmin:
+            return render_template('dashboard.html', isAdmin=isAdmin)
+
     return render_template('dashboard.html')
 
 @app.route('/resources')
@@ -591,7 +635,14 @@ def wellness():
         return redirect(url_for('login'))
     
     wellness_plan = mood_tracker.generate_wellness_plan(session['user_id'])
-    return render_template('wellness.html', wellness_plan=wellness_plan)
+    return render_template('wellness.html', wellness_plan=wellness_plan) 
+
+def makeAdmin(username, password):
+    with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO users (username, password, isAdmin) VALUES (?, ?, ?)", (username, password, 1))
+            conn.commit()
+
 
 if __name__ == '__main__':
     init_db()

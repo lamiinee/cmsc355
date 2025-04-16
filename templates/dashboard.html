@@ -66,6 +66,20 @@
                             </div>
                         </div>
                     </div>
+                    {% if isAdmin %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-person-workspace display-4 text-primary mb-3"></i>
+                                    <h5>Administrator</h5>
+                                    <p>View and manage all users</p>
+                                    <a href="{{ url_for('admin') }}" class="btn btn-outline-primary">
+                                        Manage users
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

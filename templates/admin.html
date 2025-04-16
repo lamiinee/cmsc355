@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Admin | AI Therapist{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="bi bi-speedometer2"></i> Admin</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Welcome back Administrator!
+                </div>
+            </div>
+            <div class="row">
+                <div class="mb-3">
+                    <label for="Account" class="account-header">User Account Information:</label>
+                </div>
+                {% for user in all_users %}
+                    <div class="mb-3">
+                        <label for="Account" class="account-header">{{user['username']}}:</label>
+                        <form action="{{ url_for('remove_user_account') }}" method="POST" class="inline-form">
+                            <input type="hidden" name="target_user_id" value="{{ user['id'] }}">
+                            <button type="submit" class="admin-button">
+                              <i class="bi bi-trash3-fill"></i> Delete user account
+                            </button>
+                        </form>
+                    </div>
+                    {% for item in user %}
+            
+                        <form method="POST" class="auth-form">
+                            
+                            <div class="mb-3">
+                                <label for="item" class="form-label">{{item}}:</label>
+                                    <input type="text" id="user_info" name="item" class="form-label" placeholder= "{{ user[item] }}">
+                            </div>
+
+                        </form>
+                    {% endfor %}    
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

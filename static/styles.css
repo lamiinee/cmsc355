@@ -17,7 +17,18 @@ body {
   display: flex;
   flex-direction: column;
 }
-
+.admin-button {
+  background-color: #686b6d;
+  color: white;
+  border: none;
+  padding: 5px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.admin-button:hover {
+  background-color: #b30000;
+}
 /* Account styles*/
 #account_info {
   width: 200px;  /* Adjust width as needed */

@@ -44,9 +44,10 @@
 
                     <div class="mb-3">
                         <label for="Delete" class="form-label">Deletes Account:</label>
-                        <form action="/remove_user_account" method="POST">
+                        <form action="{{ url_for('remove_user_account') }}" method="POST">
+                            <input type="hidden" name="target_user_id" value="{{ user_data[0]['id'] }}">
                             <button type="submit" class="run-button">
-                                <i class="bi bi-person-x"></i> Delete account
+                              <i class="bi bi-trash3-fill"></i> Delete user account
                             </button>
                         </form>
                     </div>
@@ -56,25 +57,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    document.getElementById("account_info").addEventListener("keyup", function(event) {
-    // Check if the Enter key was pressed
-    if (event.key === "Enter") {
-      // Get the value of the input field
-      var value = this.value;
-      // Execute your desired function
-      handleInput(value);
-      // Optionally, clear the field
-      this.value = "";
-    }
-    });
-
-    function handleInput(str){
-        var input = document.getElementById("account_info").value;
-
-    }
-</script>
 {% endblock %}
