@@ -9,6 +9,7 @@ import json
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.urandom(24)
 
+__tables = {"moods", "users", "chat_history", "wellness_plans"}
 # Removed Dictionary, fixed database
 # all mood data is stored in the database.
 class MoodTracker:
@@ -145,7 +146,7 @@ def init_db():
         conn.commit()
 
 # Helper function to get a database connection
-def get_db_connection():
+def __get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row  # So we can access columns by name in the templates
     return conn
@@ -165,7 +166,6 @@ def get_chat_history(user_id, limit=10):
         messages.append({"role": "user", "content": entry["user_message"]})
         messages.append({"role": "assistant", "content": entry["ai_response"]})
     return messages
-
 
 
 def get_ai_response(prompt, conversation_context=None):
@@ -220,7 +220,6 @@ def get_ai_response(prompt, conversation_context=None):
     return ai_message
 
 
-
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
     if 'user_id' not in session:
@@ -247,7 +246,6 @@ def chat():
         return jsonify({'response': ai_response})
     
     return render_template('chat.html')
-
 
 
 @app.route('/')
@@ -291,7 +289,7 @@ def login():
             cursor = conn.cursor()
             cursor.execute("SELECT id FROM users WHERE username = ? AND password = ?", (username, password))
             user = cursor.fetchone()
-            
+
             if user:
                 session['user_id'] = user[0]
                 return redirect(url_for('dashboard'))
@@ -305,6 +303,82 @@ def login():
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('home'))
+
+
+@app.route('/account', methods=['GET', 'POST'])
+def account():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_data = __get_all_from_db("users", "id")
+
+    username = None
+    password = None
+    if request.method == 'POST':
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
+
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            try:
+                if username:
+                    cursor.execute("UPDATE users SET username = ? WHERE id = ?", (username, session['user_id']))
+                if password:
+                    cursor.execute("UPDATE users SET password = ? WHERE id = ?", (password, session['user_id']))
+                conn.commit()
+            except sqlite3.IntegrityError:
+                return render_template('account.html', user_data=user_data, error="Username already exists")
+
+        return redirect(url_for('account'))
+    
+    return render_template('account.html', user_data=user_data)
+
+
+def __delete_all_data():
+
+    for table in __tables:
+        if(table != "users"):        
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                query = f'DELETE FROM {table} WHERE user_id = ?'
+                cursor.execute(query, (session['user_id'],))
+                conn.commit()
+
+
+@app.route('/remove_user_data', methods=['POST'])
+def remove_user_data():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    __delete_all_data()
+
+    return redirect(url_for('account'))
+
+
+def __delete_account():
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        query = f'DELETE FROM users WHERE id = ?'
+        cursor.execute(query, (session['user_id'],))
+        conn.commit()
+
+
+@app.route('/remove_user_account', methods=['POST'])
+def remove_user_account():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    __delete_account()
+    session.pop('user_id', None)
+    return redirect(url_for('home'))
+
+
+def __get_all_from_db(table: str, user_col: str = 'user_id'):
+    conn = __get_db_connection()
+    query = f"SELECT * FROM {table} WHERE {user_col} = ? ORDER BY created_at DESC"
+    ret = conn.execute(query, (session['user_id'],)).fetchall()
+    conn.close()
+    return ret
 
 
 @app.route('/dashboard')
@@ -377,7 +451,7 @@ def moodtracker():
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Insert the mood into the moods table in your database.
-        conn = get_db_connection()
+        conn = __get_db_connection()
         conn.execute(
             '''INSERT INTO moods (user_id, mood, description, intensity, created_at)
                VALUES (?, ?, ?, ?, ?)''',
@@ -390,7 +464,7 @@ def moodtracker():
         return redirect(url_for('moodtracker'))
 
     # For GET method, fetch the user's mood history
-    conn = get_db_connection()
+    conn = __get_db_connection()
     mood_history = conn.execute(
         'SELECT * FROM moods WHERE user_id = ? ORDER BY created_at DESC',
         (session['user_id'],)
