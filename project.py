@@ -240,7 +240,7 @@ def get_ai_response(prompt, conversation_context=None):
     """
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": "Bearer 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",
         "Content-Type": "application/json"
     }
 
@@ -248,8 +248,9 @@ def get_ai_response(prompt, conversation_context=None):
     messages = [{
         "role": "system",
         "content": (
+            "Keep your responses short and sweet!"
             "You are a compassionate and empathetic AI therapist. "
-            "Your goal is to provide supportive, thoughtful responses and help users feel heard. "
+            "Your goal is to provide supportive, thoughtful responses and help users feel heard."
             "Please be mindful that you are not a substitute for professional mental health advice."
         )
     }]
@@ -260,7 +261,7 @@ def get_ai_response(prompt, conversation_context=None):
     messages.append({"role": "user", "content": prompt})
     
     payload = {
-        "model": "google/gemini-2.5-pro-exp-03-25:free",
+        "model": "nvidia/llama-3.1-nemotron-nano-8b-v1:free",
         "messages": messages
     }
 
