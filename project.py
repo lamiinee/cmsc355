@@ -330,10 +330,16 @@ def __get_all_users():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
+    """
+   Manages admin.
+    
+    GET: Renders the admin page.
+    POST:  Requires user to be logged in, Requires user to have admin privileges (isAdmin = 1)
+    """
     if 'user_id' not in session:
         return redirect(url_for('home'))
     if 'user_id' in session:
-        user_data = __get_all_from_db("users", "id");
+        user_data = __get_all_from_db("users", "id")
         isAdmin = user_data[0]['isAdmin']
         if isAdmin == 0:
             return redirect(url_for('home'))
@@ -638,6 +644,11 @@ def wellness():
     return render_template('wellness.html', wellness_plan=wellness_plan) 
 
 def makeAdmin(username, password):
+    """
+   Create a new Admin by requesting a username and a Password.
+
+   Set isAdmin to 1
+    """
     with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute("INSERT INTO users (username, password, isAdmin) VALUES (?, ?, ?)", (username, password, 1))

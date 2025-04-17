@@ -51,6 +51,7 @@ body {
   margin-bottom: 5px;
   font-size: 20px;
   text-decoration: underline;
+  
 }
 .inline-form {
   display: inline;
@@ -183,6 +184,12 @@ body {
   }
 }
 
+.row{
+  padding: 30px;
+}
+.form_input{
+  background-color: #b30000;
+}
 /* Print styles for wellness plan */
 @media print {
   body * {

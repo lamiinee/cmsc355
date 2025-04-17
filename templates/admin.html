@@ -7,39 +7,46 @@
     <div class="col-md-8 mx-auto">
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-primary text-white">
-                <h3 class="mb-0"><i class="bi bi-speedometer2"></i> Admin</h3>
+                <h3 class="mb-0"><i class="bi bi-speedometer2"></i> Admin Dashboard</h3>
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle"></i> Welcome back Administrator!
                 </div>
-            </div>
-            <div class="row">
-                <div class="mb-3">
-                    <label for="Account" class="account-header">User Account Information:</label>
-                </div>
-                {% for user in all_users %}
-                    <div class="mb-3">
-                        <label for="Account" class="account-header">{{user['username']}}:</label>
-                        <form action="{{ url_for('remove_user_account') }}" method="POST" class="inline-form">
-                            <input type="hidden" name="target_user_id" value="{{ user['id'] }}">
-                            <button type="submit" class="admin-button">
-                              <i class="bi bi-trash3-fill"></i> Delete user account
-                            </button>
-                        </form>
-                    </div>
-                    {% for item in user %}
-            
-                        <form method="POST" class="auth-form">
-                            
-                            <div class="mb-3">
-                                <label for="item" class="form-label">{{item}}:</label>
-                                    <input type="text" id="user_info" name="item" class="form-label" placeholder= "{{ user[item] }}">
+                
+                <div class="admin-section">
+                    <h4 class="section-title"><i class="bi bi-people-fill"></i> User Account Management</h4>
+                    {% for user in all_users %}
+                        <div class="user-card mb-4 p-3 border rounded">
+                            <div class="user-header d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-person-circle"></i> {{user['username']}}</h5>
+                                <form action="{{ url_for('remove_user_account') }}" method="POST" class="inline-form">
+                                    <input type="hidden" name="target_user_id" value="{{ user['id'] }}">
+                                    <button type="submit" class="admin-button danger">
+                                        <i class="bi bi-trash3-fill"></i> Delete Account
+                                    </button>
+                                </form>
                             </div>
-
-                        </form>
-                    {% endfor %}    
-                {% endfor %}
+                            
+                            <form method="POST" class="auth-form user-form">
+                                {% for item in user %}
+                                    <div class="mb-3 row">
+                                        <label for="{{item}}" class="col-sm-3 col-form-label form-label">{{item|replace('_', ' ')|title}}:</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" id="{{item}}" name="{{item}}" class="form-control" value="{{ user[item] }}">
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </form>
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="text-end mt-4">
+                        <button type="submit" class="save-button" form="user-forms">
+                            <i class="bi bi-save-fill"></i> Save All Changes
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
