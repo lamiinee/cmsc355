@@ -17,6 +17,45 @@ body {
   display: flex;
   flex-direction: column;
 }
+.admin-button {
+  background-color: #686b6d;
+  color: white;
+  border: none;
+  padding: 5px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.admin-button:hover {
+  background-color: #b30000;
+}
+/* Account styles*/
+#account_info {
+  width: 200px;  /* Adjust width as needed */
+  height: 30px;  /* Adjust height as needed */
+}
+.run-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.run-button:hover {
+  background-color: #b30000;
+}
+.account-header {
+  text-align: center;
+  margin-bottom: 5px;
+  font-size: 20px;
+  text-decoration: underline;
+  
+}
+.inline-form {
+  display: inline;
+}
 
 /* Auth styles */
 .auth-container {
@@ -145,6 +184,12 @@ body {
   }
 }
 
+.row{
+  padding: 30px;
+}
+.form_input{
+  background-color: #b30000;
+}
 /* Print styles for wellness plan */
 @media print {
   body * {
